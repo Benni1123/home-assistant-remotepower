@@ -24,6 +24,11 @@ gegen eine echte Instanz getestet. Keine offizielle RemotePower-Integration.
 - Sammelaktionen per `remotepower.bulk_action`, explizit für Host-IDs,
   eine Gruppe oder alle überwachten Hosts.
 - Deutsche und englische Oberfläche.
+- Originales RemotePower-Integrationsicon in normaler und doppelter Auflösung.
+  Lokale Integrationsicons benötigen Home Assistant **2026.3 oder neuer**;
+  auf älteren unterstützten Versionen funktioniert die Integration ohne Icon.
+  Die Bilder stammen aus RemotePower (Copyright 2025 tyxak, MIT-Lizenz);
+  siehe `custom_components/remotepower/brand/LICENSE`.
 
 Unbekannte oder offline Update-Zahlen werden **nicht als null** angezeigt.
 Die Gesamtzahl bleibt unbekannt, sobald ein Host keine aktuellen Zahlen hat.
