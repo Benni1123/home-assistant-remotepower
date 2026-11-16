@@ -11,7 +11,10 @@ CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 60
 # Fixed command, never composed from user/host input. No package installation.
 # Error-Mode=any prevents partial repository failures from looking successful.
-APT_REFRESH_COMMAND = "apt-get -o APT::Update::Error-Mode=any update"
+APT_REFRESH_COMMAND = (
+    "command -v apt-get >/dev/null 2>&1 || exit 127; "
+    "apt-get -o APT::Update::Error-Mode=any update"
+)
 CONTROL_ACTIONS = {"upgrade", "upgrade_no_cleanup", "reboot", "shutdown", "mode_standard", "mode_extended"}
 ACTIONS = ("scan_packages", "search_updates", "scan_acme", "upgrade",
            "upgrade_no_cleanup", "reboot", "shutdown", "mode_standard", "mode_extended")

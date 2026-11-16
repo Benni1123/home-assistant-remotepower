@@ -17,7 +17,10 @@ from .const import (
     CONTROL_ACTIONS, DEFAULT_SCAN_INTERVAL, DOMAIN,
     CONF_ALLOW_PROXMOX, CONF_REPAIRS,
 )
-from .models import TERMINAL, maintenance_for, number, project_output, start_operation, update_operation
+from .models import (
+    TERMINAL, can_try_apt_refresh, maintenance_for, number, project_output,
+    start_operation, update_operation,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -263,7 +266,7 @@ class RemotePowerCoordinator(DataUpdateCoordinator):
         if not row or not row.get("online"):
             raise HomeAssistantError("Host is offline or no longer available")
         if action == "search_updates" and (
-            not self.apt_enabled or row.get("pkg_manager") != "apt"
+            not self.apt_enabled or not can_try_apt_refresh(row.get("pkg_manager"))
         ):
             raise HomeAssistantError("APT refresh is not enabled for this host")
         self._control_guard(device_id, action)

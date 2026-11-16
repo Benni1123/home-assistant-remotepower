@@ -226,5 +226,15 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
 
     def test_command_has_no_upgrade(self):
         self.assertEqual(
-            const.APT_REFRESH_COMMAND, "apt-get -o APT::Update::Error-Mode=any update"
+            const.APT_REFRESH_COMMAND,
+            "command -v apt-get >/dev/null 2>&1 || exit 127; "
+            "apt-get -o APT::Update::Error-Mode=any update",
         )
+
+    async def test_missing_apt_never_scans(self):
+        self.session.request.return_value = response({"ok": True, "output": {
+            "cmd": f"exec:{const.APT_REFRESH_COMMAND}", "rc": 127,
+        }})
+        with self.assertRaisesRegex(api.RemotePowerError, "APT is not available"):
+            await self.client.refresh_apt("one")
+        self.assertEqual(self.session.request.call_count, 1)

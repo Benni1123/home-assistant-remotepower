@@ -260,6 +260,12 @@ class RemotePowerClient:
             )
         output = data.get("output")
         if (
+            isinstance(output, dict)
+            and output.get("cmd") in (APT_REFRESH_COMMAND, f"exec:{APT_REFRESH_COMMAND}")
+            and output.get("rc") == 127
+        ):
+            raise RemotePowerError("APT is not available on this host; no package scan requested")
+        if (
             not isinstance(output, dict)
             or output.get("cmd") not in (APT_REFRESH_COMMAND, f"exec:{APT_REFRESH_COMMAND}")
             or type(output.get("rc")) is not int

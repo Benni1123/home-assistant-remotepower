@@ -127,6 +127,25 @@ class ActionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(HAError):
             await self.coordinator.async_scan("one", apt=True)
 
+    async def test_unknown_manager_does_not_need_preliminary_scan(self):
+        self.coordinator.apt_enabled = True
+        for manager in ("unknown", None, ""):
+            with self.subTest(manager=manager):
+                self.coordinator.data["one"]["pkg_manager"] = manager
+                entity = button.RemotePowerScanButton(self.coordinator, "one", True)
+                self.assertTrue(entity.available)
+                await entity.async_press()
+        self.assertEqual(self.coordinator.client.refresh_apt.await_count, 3)
+        self.coordinator.client.scan_packages.assert_not_called()
+
+    async def test_unknown_manager_still_requires_opt_in(self):
+        self.coordinator.data["one"]["pkg_manager"] = "unknown"
+        entity = button.RemotePowerScanButton(self.coordinator, "one", True)
+        self.assertFalse(entity.available)
+        with self.assertRaises(HAError):
+            await entity.async_press()
+        self.coordinator.client.refresh_apt.assert_not_called()
+
     async def test_apt_enabled(self):
         self.coordinator.apt_enabled = True
         await self.coordinator.async_scan("one", apt=True)

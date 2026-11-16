@@ -5,6 +5,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .entity import RemotePowerEntity, discover_hosts
+from .models import can_try_apt_refresh
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -35,7 +36,7 @@ class RemotePowerScanButton(RemotePowerEntity, ButtonEntity):
         return (
             super().available and bool(self.row.get("online"))
             and (not self.apt or (
-                self.coordinator.apt_enabled and self.row.get("pkg_manager") == "apt"
+                self.coordinator.apt_enabled and can_try_apt_refresh(self.row.get("pkg_manager"))
             ))
         )
 

@@ -17,7 +17,11 @@ gegen eine echte Instanz getestet. Keine offizielle RemotePower-Integration.
   Erneuert keine Paketlisten und installiert nichts.
 - Button **Nach Updates suchen (APT)**: festes `apt-get -o
   APT::Update::Error-Mode=any update`, Erfolg abwarten, danach Inventar-Scan.
-  Nur für APT-Hosts und nach Freischaltung in den Optionen.
+  Nach Freischaltung in den Optionen nutzbar, auch wenn der Agent den Paketmanager
+  noch nicht erkannt hat. Der Befehl prüft zuerst auf dem Host, ob `apt-get`
+  vorhanden ist; bei Fehlen wird ohne Scan abgebrochen. Ein vorheriger manueller
+  Paketscan ist nicht erforderlich. Bei bereits erkanntem Nicht-APT-Paketmanager
+  bleibt der APT-Button gesperrt.
 - Zusätzliche, anfangs deaktivierte Buttons: **Pakete aktualisieren**,
   **Neustarten**, **Herunterfahren**, **ACME-Zertifikate neu erfassen**.
 - Anfangs deaktivierte Auswahl **APT-Upgrade-Modus**: Standard / Erweitert.

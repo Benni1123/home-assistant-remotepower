@@ -9,6 +9,11 @@ def number(value):
     return value if type(value) in (int, float) and math.isfinite(value) and value >= 0 else None
 
 
+def can_try_apt_refresh(manager):
+    """Unknown metadata must not require a preliminary scan; check APT at runtime."""
+    return manager in (None, "", "unknown", "apt")
+
+
 def names(value, limit=300):
     return [item[:128] for item in value[:limit] if isinstance(item, str)] if isinstance(value, list) else []
 
