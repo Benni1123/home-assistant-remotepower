@@ -1,0 +1,179 @@
+{
+  "title": "RemotePower",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit RemotePower verbinden",
+        "description": "Einen eigenen API-Schlüssel verwenden. Ohne Zertifikatsprüfung werden selbst signierte, aber auch fremde Zertifikate akzeptiert. Nur in vertrauenswürdigen Netzen abschalten.",
+        "data": {
+          "url": "Server-URL",
+          "api_key": "API-Schlüssel",
+          "verify_ssl": "TLS-Zertifikat überprüfen"
+        }
+      },
+      "reconfigure": {
+        "title": "RemotePower-Verbindung ändern",
+        "description": "API-Schlüssel leer lassen, um den bisherigen zu behalten. Es werden keine Scans oder Befehle ausgeführt. Für denselben Server nach Adress- oder Zugangsdatenänderung verwenden.",
+        "data": {"url": "Server-URL", "api_key": "Neuer API-Schlüssel (optional)", "verify_ssl": "TLS-Zertifikat überprüfen"}
+      },
+      "reauth_confirm": {
+        "title": "RemotePower-Zugang erneuern",
+        "description": "Einen gültigen API-Schlüssel eingeben. Vorhandene Hostgeräte bleiben erhalten.",
+        "data": {"url": "Server-URL", "api_key": "Neuer API-Schlüssel", "verify_ssl": "TLS-Zertifikat überprüfen"}
+      }
+    },
+    "error": {
+      "invalid_url": "Eine HTTPS-URL ohne Zugangsdaten, Abfrage oder Pfad eingeben.",
+      "invalid_auth": "Ungültiger API-Schlüssel oder fehlende Berechtigung.",
+      "cannot_connect": "Verbindung fehlgeschlagen. URL und Zertifikatsprüfung kontrollieren.",
+      "invalid_response": "Der Server liefert keinen gültigen RemotePower-Bericht."
+    },
+    "abort": {
+      "already_configured": "Dieser Server ist bereits eingerichtet.",
+      "reconfigure_successful": "Verbindung aktualisiert.",
+      "reauth_successful": "Anmeldung aktualisiert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "RemotePower-Optionen",
+        "description": "APT-Suche führt nur einen festgelegten apt-get update-Befehl aus, ohne Pakete zu installieren. Steueraktionen erlauben Paketupgrades einschließlich RemotePowers Bereinigung, Neustart, Herunterfahren und Änderungen des Upgrade-Modus. Beides ist anfangs AUS. RemotePower-Freigaben bleiben wirksam.",
+        "data": {
+          "verify_ssl": "TLS-Zertifikat überprüfen",
+          "enable_apt_refresh": "Aktualisierung der APT-Paketlisten erlauben",
+          "enable_control": "Upgrades, Stromaktionen und Upgrade-Modus erlauben",
+          "allow_proxmox_control": "Proxmox-Host-Stromaktionen und Upgrades ohne Bereinigung erlauben (betrifft Gäste)",
+          "enable_repairs": "Reparaturmeldungen für Neustartbedarf, fehlgeschlagene Aktionen und Paketupdates anzeigen",
+          "update_repair_threshold": "Paketupdates je Host, ab denen eine Reparatur erscheint (0 = aus)",
+          "update_repair_actions": "Paketupdates direkt über HA-Reparaturen verwalten",
+          "scan_interval": "Gespeicherte Berichte abfragen alle (Sekunden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "upgradable": {"name": "Verfügbare Updates"},
+      "security_updates": {"name": "Sicherheitsupdates"},
+      "os": {"name": "Betriebssystem"},
+      "last_seen": {"name": "Letzter Kontakt"},
+      "pkg_manager": {"name": "Paketmanager"},
+      "version": {"name": "Agent-Version"},
+      "last_scan": {"name": "Letzter Paket-Scan"},
+      "last_boot": {"name": "Letzter Systemstart"},
+      "last_update_status": {"name": "Letztes Update-Ergebnis", "state": {"success": "Erfolgreich", "failed": "Fehlgeschlagen"}},
+      "operation_status": {
+        "name": "Aktionsstatus",
+        "state": {
+          "idle": "Keine Aktion", "submitting": "Wird übermittelt",
+          "queued": "Wartet auf Agent", "approval_required": "Freigabe erforderlich",
+          "awaiting_result": "Übergeben; Ergebnis unbestätigt",
+          "waiting_for_return": "Wartet auf Rückkehr des Hosts",
+          "success": "Erfolgreich", "failed": "Fehlgeschlagen", "unknown": "Ergebnis unbekannt",
+          "applied": "Übernommen"
+        }
+      },
+      "hosts_online": {"name": "Hosts online"},
+      "total_updates": {"name": "Verfügbare Updates gesamt"},
+      "hosts_without_data": {"name": "Hosts ohne aktuelle Update-Daten"}
+    },
+    "binary_sensor": {
+      "online": {"name": "Online"},
+      "reboot_required": {"name": "Neustart erforderlich"},
+      "maintenance": {"name": "In Wartung"},
+      "is_proxmox": {"name": "Geschützter Proxmox-Host"}
+    },
+    "button": {
+      "scan_packages": {"name": "Paketdaten neu erfassen"},
+      "search_updates": {"name": "Nach Updates suchen (APT)"},
+      "scan_acme": {"name": "ACME-Zertifikate neu erfassen"},
+      "upgrade": {"name": "Pakete aktualisieren"},
+      "upgrade_no_cleanup": {"name": "Pakete ohne Bereinigung aktualisieren (APT)"},
+      "reboot": {"name": "Neustarten"},
+      "shutdown": {"name": "Herunterfahren"}
+    },
+    "select": {
+      "upgrade_mode": {
+        "name": "APT-Upgrade-Modus",
+        "state": {"standard": "Standard", "extended": "Erweitert"}
+      }
+    }
+  },
+  "issues": {
+    "package_updates": {
+      "title": "{count} Paketupdates verfügbar: {host}",
+      "description": "**{host}** meldet **{count} verfügbare Paketupdates** (eingestellter Schwellenwert: {threshold}). Prüfe Paketliste und Zeitpunkt der letzten Paketmeldung beim HA-Gerät oder öffne RemotePower. Für einen Reparaturdialog die direkte Paketverwaltung in den Integrationsoptionen einschalten. Updates können Dienste neu starten. Es wird nichts automatisch installiert. Diese Meldung verschwindet nach einer neuen Online-Meldung unterhalb des Schwellenwerts. Mit Schwellenwert 0 lassen sich diese Meldungen ausschalten.",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Paketupdates: {host}",
+            "description": "**{count} Paketupdates verfügbar.** Angezeigte zwischengespeicherte Paketnamen: {shown} (maximal 100; vollständiges Inventar in RemotePower). Das Öffnen dieses Dialogs führt keine Aktion aus.\n\n{packages}",
+            "menu_options": {
+              "scan_packages": "Paketdaten neu erfassen (ohne Paketquellen zu aktualisieren)",
+              "search_updates": "Nach Updates suchen (APT-Paketquellen aktualisieren)",
+              "install": "Updates installieren — prüfen und bestätigen"
+            }
+          },
+          "install": {
+            "title": "Paketupgrade bestätigen",
+            "description": "Updates auf **{host}** installieren? Das ist kein Probelauf. Dienste können neu starten. Das native Upgrade kann autoremove und Cache-Bereinigung einschließen. Erkannte Proxmox-Hosts verwenden den separaten APT-Upgrade-Weg ohne Bereinigung und benötigen die zusätzliche Proxmox-Freischaltung. Steueroptionen und RemotePower-Freigaben bleiben wirksam. Die Meldung bleibt offen, bis ein neuer Bericht unter dem Schwellenwert liegt.",
+            "data": {"confirm_install": "Ja, Paketupdates installieren"}
+          }
+        },
+        "error": {
+          "confirmation_required": "Die Installation ausdrücklich bestätigen.",
+          "install_blocked": "Upgrade gesperrt oder Ergebnis unbestätigt. Vor erneutem Ausführen Steueroptionen, Proxmox-Schutz, offene Aktionen, Wartungsmodus, Berechtigungen und RemotePower-Verlauf prüfen."
+        },
+        "abort": {
+          "host_unavailable": "Host oder Integration nicht verfügbar.",
+          "management_disabled": "Die direkte Paketverwaltung über Reparaturen ist in den Integrationsoptionen ausgeschaltet.",
+          "scan_queued": "Scan angefordert. Neue Daten kommen zeitversetzt; die Reparatur wird nicht als behoben markiert.",
+          "upgrade_queued": "Upgrade vorgemerkt, noch nicht bestätigt. Die Reparatur bleibt offen.",
+          "approval_required": "Das Upgrade wartet in RemotePower auf Freigabe. Die Reparatur bleibt offen.",
+          "action_unconfirmed": "Anfrage gesperrt oder nicht bestätigt. Vor erneutem Ausführen Optionen, Berechtigungen und RemotePower-Verlauf prüfen; ein Befehl kann noch laufen."
+        }
+      }
+    },
+    "reboot_required": {
+      "title": "Neustart erforderlich: {host}",
+      "description": "RemotePower meldet für **{host}** einen System- oder Kernel-Neustartbedarf. Ein Proxmox-Host-Neustart unterbricht seine Gäste. Über Reparieren kannst du einen Neustart ausdrücklich bestätigen. Steuerberechtigungen und RemotePower-Freigaben bleiben wirksam. Die Meldung verschwindet erst, wenn ein neuer Bericht keinen Neustartbedarf mehr meldet.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Neustart durchführen",
+            "description": "**{host}** neu starten? Dienste werden unterbrochen. Bei einem Proxmox-Host betrifft das alle Gäste. Steueraktionen und gegebenenfalls Proxmox-Aktionen müssen in den Integrationsoptionen erlaubt sein. RemotePower kann eine zusätzliche Freigabe verlangen.",
+            "data": {"confirm_reboot": "Ja, Neustart durchführen"}
+          }
+        },
+        "error": {
+          "confirmation_required": "Den Neustart ausdrücklich bestätigen.",
+          "reboot_blocked": "Neustart gesperrt oder unbestätigt. Hoststatus, Berechtigungen, offene Aktionen, Wartungsmodus und Integrationsoptionen prüfen."
+        },
+        "abort": {
+          "host_unavailable": "Host oder Integration nicht verfügbar.",
+          "approval_required": "Der Neustart wartet in RemotePower auf Freigabe. Die Reparatur bleibt offen.",
+          "reboot_queued": "Neustart vorgemerkt, noch nicht bestätigt. Die Reparatur bleibt offen, bis ein neuer Hostbericht keinen Neustartbedarf mehr meldet."
+        }
+      }
+    },
+    "action_failed": {
+      "title": "RemotePower-Aktion fehlgeschlagen: {host}",
+      "description": "Die letzte verfolgte Aktion für **{host}** ist fehlgeschlagen. Vor erneutem Ausführen den Aktionsstatus-Sensor und den Befehlsverlauf in RemotePower prüfen. Upgrades und Neustarts werden nicht automatisch wiederholt."
+    }
+  },
+  "services": {
+    "bulk_action": {
+      "name": "Sammelaktion ausführen",
+      "description": "Genau einen Zielfilter wählen. Aktionen werden vorgemerkt, nicht als abgeschlossen bestätigt. Steueraktionen benötigen zusätzlich confirm und die Freischaltung in den Optionen. Antwort pro Host beachten.",
+      "fields": {
+        "entry_id": {"name": "Integrationseintrag", "description": "Konfigurationseintrags-ID der RemotePower-Integration."},
+        "action": {"name": "Aktion"},
+        "host_ids": {"name": "RemotePower-Host-IDs"},
+        "group": {"name": "RemotePower-Gruppe"},
+        "all_monitored": {"name": "Alle überwachten Hosts"},
+        "confirm": {"name": "Steueraktion bestätigen"}
+      }
+    }
+  }
+}

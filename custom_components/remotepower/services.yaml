@@ -1,0 +1,36 @@
+bulk_action:
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: remotepower
+    action:
+      required: true
+      selector:
+        select:
+          options:
+            - scan_packages
+            - search_updates
+            - scan_acme
+            - upgrade
+            - upgrade_no_cleanup
+            - reboot
+            - shutdown
+            - mode_standard
+            - mode_extended
+    host_ids:
+      example: ["RemotePower-host-id"]
+      selector:
+        object:
+    group:
+      selector:
+        text:
+    all_monitored:
+      default: false
+      selector:
+        boolean:
+    confirm:
+      default: false
+      selector:
+        boolean:
