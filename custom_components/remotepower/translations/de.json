@@ -44,7 +44,8 @@
           "enable_apt_refresh": "Aktualisierung der APT-Paketlisten erlauben",
           "enable_control": "Upgrades, Stromaktionen und Upgrade-Modus erlauben",
           "allow_proxmox_control": "Proxmox-Host-Stromaktionen und Upgrades ohne Bereinigung erlauben (betrifft Gäste)",
-          "enable_repairs": "Reparaturmeldungen für Neustartbedarf und fehlgeschlagene Aktionen anzeigen",
+          "enable_repairs": "Reparaturmeldungen für Neustartbedarf, fehlgeschlagene Aktionen und Paketupdates anzeigen",
+          "update_repair_threshold": "Paketupdates je Host, ab denen eine Reparatur erscheint (0 = aus)",
           "scan_interval": "Gespeicherte Berichte abfragen alle (Sekunden)"
         }
       }
@@ -99,6 +100,10 @@
     }
   },
   "issues": {
+    "package_updates": {
+      "title": "{count} Paketupdates verfügbar: {host}",
+      "description": "**{host}** meldet **{count} verfügbare Paketupdates** (eingestellter Schwellenwert: {threshold}). Prüfe Paketliste und Zeitpunkt der letzten Paketmeldung beim HA-Gerät oder öffne RemotePower. Updates können Dienste neu starten. Es wird nichts automatisch installiert. Diese Meldung verschwindet, sobald eine neue Online-Meldung unterhalb des Schwellenwerts liegt. Mit Schwellenwert 0 in den Integrationsoptionen lassen sich diese Update-Meldungen ausschalten."
+    },
     "reboot_required": {
       "title": "Neustart erforderlich: {host}",
       "description": "RemotePower meldet für **{host}** einen System- oder Kernel-Neustartbedarf. Ein Proxmox-Host-Neustart unterbricht seine Gäste. Über Reparieren kannst du einen Neustart ausdrücklich bestätigen. Steuerberechtigungen und RemotePower-Freigaben bleiben wirksam. Die Meldung verschwindet erst, wenn ein neuer Bericht keinen Neustartbedarf mehr meldet.",

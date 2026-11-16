@@ -20,6 +20,8 @@ async def main():
         coordinator = SimpleNamespace(
             entry=SimpleNamespace(entry_id="smoke"),
             repairs_enabled=True,
+            update_repair_threshold=1,
+            client=SimpleNamespace(url="https://remotepower.invalid"),
             operations={},
             history={},
             data={"host": {
@@ -32,6 +34,9 @@ async def main():
         sync_issues(hass, coordinator, coordinator.data)
         registry = ir.async_get(hass)
         assert registry.async_get_issue("remotepower", "smoke_host_reboot") is not None
+        update_issue = registry.async_get_issue("remotepower", "smoke_host_updates")
+        assert update_issue is not None
+        assert update_issue.translation_placeholders["count"] == "1"
         sensor = RemotePowerSensor(coordinator, "host", "upgradable")
         assert sensor.native_value == 1
         assert sensor.extra_state_attributes["kept_back"] == ["example-package"]

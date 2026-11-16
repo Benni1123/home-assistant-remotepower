@@ -20,6 +20,8 @@ from .const import (
     CONF_ENABLE_CONTROL,
     CONF_ALLOW_PROXMOX,
     CONF_REPAIRS,
+    CONF_UPDATE_REPAIR_THRESHOLD,
+    DEFAULT_UPDATE_REPAIR_THRESHOLD,
     CONF_SCAN_INTERVAL,
     CONF_VERIFY_SSL,
     DEFAULT_SCAN_INTERVAL,
@@ -167,6 +169,12 @@ class RemotePowerOptionsFlow(config_entries.OptionsFlow):
                     CONF_REPAIRS,
                     default=self.config_entry.options.get(CONF_REPAIRS, True),
                 ): bool,
+                vol.Required(
+                    CONF_UPDATE_REPAIR_THRESHOLD,
+                    default=self.config_entry.options.get(
+                        CONF_UPDATE_REPAIR_THRESHOLD, DEFAULT_UPDATE_REPAIR_THRESHOLD
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=100000)),
                 vol.Required(
                     CONF_SCAN_INTERVAL,
                     default=self.config_entry.options.get(

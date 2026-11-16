@@ -17,6 +17,27 @@ def sync_issues(hass, coordinator, rows):
     expected = set()
     if coordinator.repairs_enabled:
         for device_id, row in rows.items():
+            updates_id = f"{prefix}_{device_id}_updates"
+            count = row.get("upgradable")
+            threshold = coordinator.update_repair_threshold
+            if threshold > 0:
+                if not row.get("online") or type(count) is not int or count < 0:
+                    # Unknown/offline is not "zero updates". Keep an existing
+                    # issue, but do not create a new one from stale counts.
+                    expected.add(updates_id)
+                elif count >= threshold:
+                    expected.add(updates_id)
+                    ir.async_create_issue(
+                        hass, DOMAIN, updates_id,
+                        is_fixable=False, is_persistent=False,
+                        severity=ir.IssueSeverity.WARNING,
+                        translation_key="package_updates",
+                        translation_placeholders={
+                            "host": str(row.get("name", device_id))[:128],
+                            "count": str(count), "threshold": str(threshold),
+                        },
+                        learn_more_url=coordinator.client.url,
+                    )
             issue_id = f"{prefix}_{device_id}_reboot"
             # Retain a pending-reboot issue while the host is offline. Silence
             # isn't evidence of a successful reboot.

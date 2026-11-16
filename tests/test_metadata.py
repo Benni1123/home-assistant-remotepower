@@ -10,6 +10,19 @@ INTEGRATION = ROOT / "custom_components" / "remotepower"
 
 
 class MetadataTests(unittest.TestCase):
+    def test_readme_has_complete_english_then_german(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        english = readme.split("## English", 1)[1].split("## Deutsch", 1)[0]
+        german = readme.split("## Deutsch", 1)[1]
+        for heading in ("Features", "Installation", "Safety and action semantics",
+                        "Bulk actions", "Releases and local test builds", "Development"):
+            self.assertIn(f"### {heading}", english)
+        for heading in ("Funktionen", "Installation", "Sicherheit und Bedeutung der Aktionen",
+                        "Sammelaktionen", "Veröffentlichungen und lokale Testversionen", "Entwicklung"):
+            self.assertIn(f"### {heading}", german)
+        self.assertIn("default **100**", english)
+        self.assertIn("Standard **100**", german)
+
     def test_brand_icons(self):
         for name, size in (("icon.png", 256), ("icon@2x.png", 512)):
             with self.subTest(name=name):

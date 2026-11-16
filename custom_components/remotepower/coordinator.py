@@ -16,6 +16,7 @@ from .const import (
     ACTIONS, CONF_ENABLE_APT, CONF_ENABLE_CONTROL, CONF_SCAN_INTERVAL,
     CONTROL_ACTIONS, DEFAULT_SCAN_INTERVAL, DOMAIN,
     CONF_ALLOW_PROXMOX, CONF_REPAIRS,
+    CONF_UPDATE_REPAIR_THRESHOLD, DEFAULT_UPDATE_REPAIR_THRESHOLD,
 )
 from .models import (
     TERMINAL, can_try_apt_refresh, maintenance_for, number, project_output,
@@ -43,6 +44,9 @@ class RemotePowerCoordinator(DataUpdateCoordinator):
         self.control_enabled = entry.options.get(CONF_ENABLE_CONTROL, False)
         self.proxmox_enabled = entry.options.get(CONF_ALLOW_PROXMOX, False)
         self.repairs_enabled = entry.options.get(CONF_REPAIRS, True)
+        self.update_repair_threshold = entry.options.get(
+            CONF_UPDATE_REPAIR_THRESHOLD, DEFAULT_UPDATE_REPAIR_THRESHOLD
+        )
         self.operations = {}
         self.history = {}
         self.proxmox_hosts = set()

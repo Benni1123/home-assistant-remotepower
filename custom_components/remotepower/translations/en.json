@@ -44,7 +44,8 @@
           "enable_apt_refresh": "Allow APT package-list refresh",
           "enable_control": "Allow upgrades, power actions and upgrade-mode changes",
           "allow_proxmox_control": "Allow Proxmox host power actions and upgrades without cleanup (affects guests)",
-          "enable_repairs": "Show repair issues for reboot requirements and failed actions",
+          "enable_repairs": "Show repair issues for reboots, failed actions and package updates",
+          "update_repair_threshold": "Package updates per host before creating a repair (0 = off)",
           "scan_interval": "Read cached reports every (seconds)"
         }
       }
@@ -99,6 +100,10 @@
     }
   },
   "issues": {
+    "package_updates": {
+      "title": "{count} package updates available: {host}",
+      "description": "**{host}** reports **{count} available package updates** (configured threshold: {threshold}). Review the package list and last package-report timestamp in the host's HA device or open RemotePower. Updates may restart services. Nothing is installed automatically. This issue clears when a fresh online report falls below the threshold. Set the package-update repair threshold to 0 in the integration options to disable these messages."
+    },
     "reboot_required": {
       "title": "Reboot required: {host}",
       "description": "RemotePower reports a system or kernel reboot requirement for **{host}**. A Proxmox host reboot interrupts its guests. Choose Repair to explicitly confirm a reboot. Control permissions and RemotePower approvals remain enforced. This issue clears only after a fresh report clears the requirement.",
