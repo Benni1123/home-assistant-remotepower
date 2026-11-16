@@ -9,8 +9,7 @@
 Custom integration for [RemotePower](https://github.com/tyxak/remotepower),
 developed against the RemotePower 8.0 API and source code. This is not an
 official RemotePower integration. Automated tests cover simulated API responses
-and real Home Assistant entity/repair APIs with a fake host; full live-system
-validation is still ongoing.
+and real Home Assistant entity/repair APIs with a fake host.
 
 ### Features
 
@@ -259,13 +258,31 @@ Bulk actions are **not a rolling-reboot orchestrator**: queued reboots may
 happen at practically the same time. Shutting down the host running HA or
 RemotePower also stops the corresponding management interface.
 
-### Releases and local test builds
+### Releases
 
-A manually installed **0.2.2** test build can later be updated to **1.0.0**
-through HACS once the repository is registered there and that release has
-been published. A lower local manifest version alone neither registers an
-integration with HACS nor publishes a release. There is no separate built-in
-OTA updater in this integration.
+Relevant changes pushed or merged into `main` automatically start the **Release**
+workflow. It validates the code, creates a version tag, publishes a GitHub release
+and attaches `home-assistant-remotepower-VERSION.zip`. Releases always use `main`;
+the workflow never deploys files to a running Home Assistant installation.
+README-only changes do not automatically create a release.
+
+The first release uses the manifest version **1.0.0**. Later releases keep a
+manually raised manifest version or automatically advance the latest stable
+patch version if that version has already been tagged. A retry at the same
+tagged commit repairs the existing release asset instead of bumping again.
+
+For a manual release, open **Actions → Release → Run workflow** and select `main`.
+The optional **Letzten gemergten PR als Changelog verwenden** checkbox uses only
+the latest merged PR targeting `main` as release notes. Otherwise, notes contain
+all merged PRs since the previous release, including all reachable merged PRs
+for the first release. A PR's `## Changelog` section is preferred; its body or
+title is used as a fallback. On a manual retry with the checkbox enabled,
+existing release notes are explicitly replaced with the latest PR's notes.
+Other retries preserve existing notes and refresh the asset.
+
+The workflow needs permission to write repository contents and tags. If branch
+protection blocks the automated version commit, update the manifest through
+the normal repository process; the workflow does not bypass branch protections.
 
 ### Development
 
@@ -277,7 +294,7 @@ python -m unittest discover -s tests -v
 Local tests use simulated API responses and lightweight HA test doubles,
 without credentials or actions on real hosts. CI additionally checks imports
 and exercises real Home Assistant entity, issue-registry and repair-flow APIs
-with a fake host. This is not an end-to-end test of a live RemotePower deployment.
+with a fake host.
 
 ---
 
@@ -288,8 +305,7 @@ with a fake host. This is not an end-to-end test of a live RemotePower deploymen
 Custom Integration für [RemotePower](https://github.com/tyxak/remotepower),
 entwickelt anhand der RemotePower-8.0-API und ihres Quellcodes. Keine offizielle
 RemotePower-Integration. Automatische Tests prüfen simulierte API-Antworten
-und echte HA-Entitäts-/Reparatur-APIs mit einem simulierten Host; die vollständige
-Prüfung an laufenden Systemen ist noch nicht abgeschlossen.
+und echte HA-Entitäts-/Reparatur-APIs mit einem simulierten Host.
 
 ### Funktionen
 
@@ -554,13 +570,35 @@ Sammelaktionen sind **kein Rolling-Reboot-Orchestrator**: vorgemerkte Neustarts
 können praktisch gleichzeitig stattfinden. Bei HA und RemotePower auf demselben
 Host beendet dessen Herunterfahren auch die jeweilige Verwaltungsoberfläche.
 
-### Veröffentlichungen und lokale Testversionen
+### Veröffentlichungen
 
-Eine manuell installierte Testversion **0.2.2** kann später über HACS auf
-**1.0.0** aktualisiert werden, sobald das Repository dort registriert und
-dieses Release veröffentlicht ist. Eine niedrigere lokale Manifest-Version
-allein registriert keine Integration in HACS und veröffentlicht kein Release.
-Die Integration enthält keinen separaten eingebauten OTA-Updater.
+Relevante Änderungen, die nach `main` gepusht oder gemergt werden, starten
+automatisch den Workflow **Release**. Er prüft den Code, erstellt einen
+Versions-Tag, veröffentlicht ein GitHub-Release und hängt
+`home-assistant-remotepower-VERSION.zip` an. Veröffentlicht wird immer `main`;
+der Workflow kopiert keine Dateien in eine laufende Home-Assistant-Installation.
+Reine README-Änderungen erzeugen nicht automatisch ein Release.
+
+Das erste Release verwendet die Manifest-Version **1.0.0**. Danach wird eine
+manuell erhöhte Manifest-Version übernommen oder automatisch die nächste stabile
+Patch-Version gewählt, falls die Version bereits getaggt wurde. Ein erneuter
+Lauf am selben getaggten Commit repariert den vorhandenen Release-Anhang,
+statt die Version nochmals zu erhöhen.
+
+Für einen manuellen Start **Actions → Release → Run workflow** öffnen und
+`main` wählen. Die optionale Checkbox **Letzten gemergten PR als Changelog
+verwenden** nimmt ausschließlich den letzten nach `main` gemergten PR als
+Release-Notizen. Ohne Checkbox werden alle seit dem letzten Release gemergten
+PRs verwendet; beim ersten Release alle erreichbaren gemergten PRs.
+Bevorzugt wird deren Abschnitt `## Changelog`, ersatzweise der PR-Text oder Titel.
+Bei einem manuellen Wiederholungslauf mit gesetzter Checkbox werden vorhandene
+Release-Notizen ausdrücklich durch die Notizen des letzten PRs ersetzt.
+Andere Wiederholungsläufe behalten vorhandene Notizen und erneuern den Anhang.
+
+Der Workflow benötigt Schreibrechte für Repository-Inhalte und Tags.
+Blockiert ein Branch-Schutz den automatischen Versions-Commit, muss die
+Manifest-Version über den normalen Repository-Prozess erhöht werden.
+Branch-Schutzregeln werden nicht umgangen.
 
 ### Entwicklung
 
@@ -572,4 +610,4 @@ python -m unittest discover -s tests -v
 Die lokalen Tests verwenden simulierte API-Antworten und kleine HA-Test-Doubles,
 ohne Zugangsdaten oder Aktionen auf echten Hosts. Die CI prüft zusätzlich
 Imports und echte HA-Entitäts-, Issue-Registry- und Reparatur-APIs mit einem
-simulierten Host. Das ist kein Ende-zu-Ende-Test einer laufenden RemotePower-Instanz.
+simulierten Host.

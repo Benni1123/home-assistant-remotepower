@@ -15,10 +15,10 @@ class MetadataTests(unittest.TestCase):
         english = readme.split("## English", 1)[1].split("## Deutsch", 1)[0]
         german = readme.split("## Deutsch", 1)[1]
         for heading in ("Features", "Installation", "Safety and action semantics",
-                        "Bulk actions", "Releases and local test builds", "Development"):
+                        "Bulk actions", "Releases", "Development"):
             self.assertIn(f"### {heading}", english)
         for heading in ("Funktionen", "Installation", "Sicherheit und Bedeutung der Aktionen",
-                        "Sammelaktionen", "Veröffentlichungen und lokale Testversionen", "Entwicklung"):
+                        "Sammelaktionen", "Veröffentlichungen", "Entwicklung"):
             self.assertIn(f"### {heading}", german)
         self.assertIn("default **100**", english)
         self.assertIn("Standard **100**", german)
