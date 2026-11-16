@@ -29,7 +29,7 @@ def sync_issues(hass, coordinator, rows):
                     expected.add(updates_id)
                     ir.async_create_issue(
                         hass, DOMAIN, updates_id,
-                        is_fixable=False, is_persistent=False,
+                        is_fixable=coordinator.update_repair_actions, is_persistent=False,
                         severity=ir.IssueSeverity.WARNING,
                         translation_key="package_updates",
                         translation_placeholders={
@@ -37,6 +37,7 @@ def sync_issues(hass, coordinator, rows):
                             "count": str(count), "threshold": str(threshold),
                         },
                         learn_more_url=coordinator.client.url,
+                        data={"entry_id": prefix, "device_id": device_id, "kind": "updates"},
                     )
             issue_id = f"{prefix}_{device_id}_reboot"
             # Retain a pending-reboot issue while the host is offline. Silence

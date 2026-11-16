@@ -46,6 +46,7 @@
           "allow_proxmox_control": "Allow Proxmox host power actions and upgrades without cleanup (affects guests)",
           "enable_repairs": "Show repair issues for reboots, failed actions and package updates",
           "update_repair_threshold": "Package updates per host before creating a repair (0 = off)",
+          "update_repair_actions": "Manage package updates directly from HA Repairs",
           "scan_interval": "Read cached reports every (seconds)"
         }
       }
@@ -102,7 +103,37 @@
   "issues": {
     "package_updates": {
       "title": "{count} package updates available: {host}",
-      "description": "**{host}** reports **{count} available package updates** (configured threshold: {threshold}). Review the package list and last package-report timestamp in the host's HA device or open RemotePower. Updates may restart services. Nothing is installed automatically. This issue clears when a fresh online report falls below the threshold. Set the package-update repair threshold to 0 in the integration options to disable these messages."
+      "description": "**{host}** reports **{count} available package updates** (configured threshold: {threshold}). Review the package list and last package-report timestamp in the host's HA device or open RemotePower. Enable direct package management in the integration options to use a repair dialog. Updates may restart services. Nothing is installed automatically. This issue clears when a fresh online report falls below the threshold. Set the threshold to 0 to disable these messages.",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Package updates: {host}",
+            "description": "**{count} package updates available.** Cached package names shown: {shown} (at most 100; see RemotePower for the full inventory). Opening this dialog does not execute an action.\n\n{packages}",
+            "menu_options": {
+              "scan_packages": "Rescan package data (without refreshing repositories)",
+              "search_updates": "Search for updates (APT repository refresh)",
+              "install": "Install updates — review and confirm"
+            }
+          },
+          "install": {
+            "title": "Confirm package upgrade",
+            "description": "Install updates on **{host}**? This is not a dry run. Services may restart. The native upgrade can include autoremove and cache cleanup. Detected Proxmox hosts use the separate APT upgrade without cleanup and require the additional Proxmox permission. Control options and RemotePower approvals still apply. The issue stays open until a fresh report falls below the threshold.",
+            "data": {"confirm_install": "Yes, install package updates"}
+          }
+        },
+        "error": {
+          "confirmation_required": "Explicitly confirm the installation.",
+          "install_blocked": "Upgrade blocked or result unconfirmed. Check control options, Proxmox protection, pending actions, maintenance, permissions and RemotePower history before retrying."
+        },
+        "abort": {
+          "host_unavailable": "Host or integration unavailable.",
+          "management_disabled": "Direct package management from Repairs is disabled in the integration options.",
+          "scan_queued": "Scan requested. New data arrives asynchronously; this repair is not marked fixed.",
+          "upgrade_queued": "Upgrade queued, not yet confirmed. This repair remains open.",
+          "approval_required": "Upgrade awaits approval in RemotePower. This repair remains open.",
+          "action_unconfirmed": "Request blocked or not confirmed. Check permissions, options and RemotePower history before retrying; a command may still be running."
+        }
+      }
     },
     "reboot_required": {
       "title": "Reboot required: {host}",

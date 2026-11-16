@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
 
 from custom_components.remotepower.issues import sync_issues
-from custom_components.remotepower.repairs import RemotePowerRebootRepair
+from custom_components.remotepower.repairs import RemotePowerRebootRepair, RemotePowerUpdateRepair
 from custom_components.remotepower.sensor import RemotePowerSensor
 
 
@@ -20,7 +20,9 @@ async def main():
         coordinator = SimpleNamespace(
             entry=SimpleNamespace(entry_id="smoke"),
             repairs_enabled=True,
+            last_update_success=True,
             update_repair_threshold=1,
+            update_repair_actions=False,
             client=SimpleNamespace(url="https://remotepower.invalid"),
             operations={},
             history={},
@@ -54,6 +56,24 @@ async def main():
         coordinator.data["host"]["reboot_required"] = False
         sync_issues(hass, coordinator, coordinator.data)
         assert registry.async_get_issue("remotepower", "smoke_host_reboot") is None
+        coordinator.update_repair_actions = True
+        coordinator.apt_enabled = True
+        sync_issues(hass, coordinator, coordinator.data)
+        assert registry.async_get_issue("remotepower", "smoke_host_updates").is_fixable
+        package_repair = RemotePowerUpdateRepair({
+            "entry_id": "smoke", "device_id": "host", "kind": "updates",
+        })
+        package_repair.hass = hass
+        package_repair.context = {"issue_id": "smoke_host_updates"}
+        package_repair.handler = "remotepower"
+        package_repair.flow_id = "package-smoke"
+        coordinator.async_action.reset_mock()
+        assert (await package_repair.async_step_init())["type"] == "menu"
+        assert (await package_repair.async_step_install())["type"] == "form"
+        coordinator.async_action.assert_not_called()
+        result = await package_repair.async_step_install({"confirm_install": True})
+        assert result["type"] == "abort" and result["reason"] == "upgrade_queued"
+        assert registry.async_get_issue("remotepower", "smoke_host_updates") is not None
         await hass.async_stop(force=True)
 
 

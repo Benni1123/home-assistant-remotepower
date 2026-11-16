@@ -46,6 +46,7 @@
           "allow_proxmox_control": "Proxmox-Host-Stromaktionen und Upgrades ohne Bereinigung erlauben (betrifft Gäste)",
           "enable_repairs": "Reparaturmeldungen für Neustartbedarf, fehlgeschlagene Aktionen und Paketupdates anzeigen",
           "update_repair_threshold": "Paketupdates je Host, ab denen eine Reparatur erscheint (0 = aus)",
+          "update_repair_actions": "Paketupdates direkt über HA-Reparaturen verwalten",
           "scan_interval": "Gespeicherte Berichte abfragen alle (Sekunden)"
         }
       }
@@ -102,7 +103,37 @@
   "issues": {
     "package_updates": {
       "title": "{count} Paketupdates verfügbar: {host}",
-      "description": "**{host}** meldet **{count} verfügbare Paketupdates** (eingestellter Schwellenwert: {threshold}). Prüfe Paketliste und Zeitpunkt der letzten Paketmeldung beim HA-Gerät oder öffne RemotePower. Updates können Dienste neu starten. Es wird nichts automatisch installiert. Diese Meldung verschwindet, sobald eine neue Online-Meldung unterhalb des Schwellenwerts liegt. Mit Schwellenwert 0 in den Integrationsoptionen lassen sich diese Update-Meldungen ausschalten."
+      "description": "**{host}** meldet **{count} verfügbare Paketupdates** (eingestellter Schwellenwert: {threshold}). Prüfe Paketliste und Zeitpunkt der letzten Paketmeldung beim HA-Gerät oder öffne RemotePower. Für einen Reparaturdialog die direkte Paketverwaltung in den Integrationsoptionen einschalten. Updates können Dienste neu starten. Es wird nichts automatisch installiert. Diese Meldung verschwindet nach einer neuen Online-Meldung unterhalb des Schwellenwerts. Mit Schwellenwert 0 lassen sich diese Meldungen ausschalten.",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Paketupdates: {host}",
+            "description": "**{count} Paketupdates verfügbar.** Angezeigte zwischengespeicherte Paketnamen: {shown} (maximal 100; vollständiges Inventar in RemotePower). Das Öffnen dieses Dialogs führt keine Aktion aus.\n\n{packages}",
+            "menu_options": {
+              "scan_packages": "Paketdaten neu erfassen (ohne Paketquellen zu aktualisieren)",
+              "search_updates": "Nach Updates suchen (APT-Paketquellen aktualisieren)",
+              "install": "Updates installieren — prüfen und bestätigen"
+            }
+          },
+          "install": {
+            "title": "Paketupgrade bestätigen",
+            "description": "Updates auf **{host}** installieren? Das ist kein Probelauf. Dienste können neu starten. Das native Upgrade kann autoremove und Cache-Bereinigung einschließen. Erkannte Proxmox-Hosts verwenden den separaten APT-Upgrade-Weg ohne Bereinigung und benötigen die zusätzliche Proxmox-Freischaltung. Steueroptionen und RemotePower-Freigaben bleiben wirksam. Die Meldung bleibt offen, bis ein neuer Bericht unter dem Schwellenwert liegt.",
+            "data": {"confirm_install": "Ja, Paketupdates installieren"}
+          }
+        },
+        "error": {
+          "confirmation_required": "Die Installation ausdrücklich bestätigen.",
+          "install_blocked": "Upgrade gesperrt oder Ergebnis unbestätigt. Vor erneutem Ausführen Steueroptionen, Proxmox-Schutz, offene Aktionen, Wartungsmodus, Berechtigungen und RemotePower-Verlauf prüfen."
+        },
+        "abort": {
+          "host_unavailable": "Host oder Integration nicht verfügbar.",
+          "management_disabled": "Die direkte Paketverwaltung über Reparaturen ist in den Integrationsoptionen ausgeschaltet.",
+          "scan_queued": "Scan angefordert. Neue Daten kommen zeitversetzt; die Reparatur wird nicht als behoben markiert.",
+          "upgrade_queued": "Upgrade vorgemerkt, noch nicht bestätigt. Die Reparatur bleibt offen.",
+          "approval_required": "Das Upgrade wartet in RemotePower auf Freigabe. Die Reparatur bleibt offen.",
+          "action_unconfirmed": "Anfrage gesperrt oder nicht bestätigt. Vor erneutem Ausführen Optionen, Berechtigungen und RemotePower-Verlauf prüfen; ein Befehl kann noch laufen."
+        }
+      }
     },
     "reboot_required": {
       "title": "Neustart erforderlich: {host}",

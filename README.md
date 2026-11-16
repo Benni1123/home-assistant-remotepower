@@ -180,8 +180,19 @@ default **100**, **0 = off**, maximum 100000. For example, a threshold of 10 cre
 The same issue is updated with the current count, not duplicated for each package.
 A fresh online report below the threshold removes it. Unknown/offline counts
 preserve an existing issue but do not create a new one.
-The global repair-issues option must also be enabled. These issues provide a
-link to RemotePower and never install packages automatically.
+The global repair-issues option must also be enabled. By default these issues
+only provide a link to RemotePower and never install packages automatically.
+
+The separate **Manage package updates directly from HA Repairs** option is
+**off by default**. Enable it to add a **Repair** dialog showing the pending
+count and up to 100 cached package names, with actions to rescan inventory,
+refresh APT repositories (if APT search is enabled) or review an installation.
+Opening the dialog does nothing to the host. Installation requires a second
+explicit confirmation, enabled control actions and any RemotePower approval.
+Detected Proxmox hosts automatically use the no-cleanup APT upgrade path and
+still require the additional Proxmox permission. Queuing a scan or upgrade
+does not mark the repair as fixed. Disabling the option also blocks actions
+from a dialog that was already open; existing buttons and protections are unchanged.
 
 #### Connection editing and diagnostics
 
@@ -459,8 +470,21 @@ für jedes Paket eine eigene Reparatur anzulegen. Ein neuer Online-Bericht
 unterhalb des Schwellenwerts entfernt sie. Bei unbekannten Paketdaten oder
 Offline-Hosts bleibt eine bestehende Warnung erhalten; aus solchen Daten wird
 keine neue Warnung erzeugt. Die allgemeine Option **Reparaturmeldungen anzeigen**
-muss ebenfalls aktiv sein. Diese Meldung installiert nichts und bietet nur
-einen Link zu RemotePower, keine ungefragte Update-Aktion.
+muss ebenfalls aktiv sein. Standardmäßig bietet diese Meldung nur einen
+Link zu RemotePower und installiert nichts automatisch.
+
+Die separate Option **Paketupdates direkt über HA-Reparaturen verwalten**
+ist **standardmäßig aus**. Eingeschaltet ergänzt sie einen **Reparieren**-Dialog
+mit Paketanzahl, bis zu 100 zwischengespeicherten Paketnamen und Aktionen zum
+erneuten Erfassen, Aktualisieren der APT-Paketquellen (bei freigeschalteter
+APT-Suche) oder Prüfen einer Installation. Das Öffnen führt keine Hostaktion aus.
+Eine Installation erfordert eine zweite ausdrückliche Bestätigung, erlaubte
+Steueraktionen und gegebenenfalls die RemotePower-Freigabe. Erkannte
+Proxmox-Hosts verwenden automatisch den APT-Upgrade-Weg ohne Bereinigung;
+die zusätzliche Proxmox-Freischaltung bleibt nötig. Vorgemerkte Scans oder
+Upgrades markieren die Reparatur nicht als behoben. Das Ausschalten der Option
+blockiert auch Aktionen aus einem bereits geöffneten Dialog; vorhandene
+Buttons und Schutzmechanismen bleiben unverändert.
 
 #### Verbindung und Diagnose
 

@@ -4,6 +4,7 @@ from .const import (
     CONF_ALLOW_PROXMOX, CONF_ENABLE_APT, CONF_ENABLE_CONTROL,
     CONF_REPAIRS, CONF_SCAN_INTERVAL, CONF_VERIFY_SSL, DOMAIN,
     CONF_UPDATE_REPAIR_THRESHOLD,
+    CONF_UPDATE_REPAIR_ACTIONS,
 )
 
 
@@ -27,6 +28,7 @@ async def async_get_config_entry_diagnostics(hass, entry):
             CONF_VERIFY_SSL, CONF_ENABLE_APT, CONF_ENABLE_CONTROL, CONF_ALLOW_PROXMOX,
             CONF_REPAIRS, CONF_SCAN_INTERVAL,
             CONF_UPDATE_REPAIR_THRESHOLD,
+            CONF_UPDATE_REPAIR_ACTIONS,
         )},
         "last_update_success": coordinator.last_update_success if coordinator else False,
         "hosts": hosts,

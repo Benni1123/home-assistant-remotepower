@@ -8,6 +8,7 @@ CONF_ENABLE_CONTROL = "enable_control"
 CONF_ALLOW_PROXMOX = "allow_proxmox_control"
 CONF_REPAIRS = "enable_repairs"
 CONF_UPDATE_REPAIR_THRESHOLD = "update_repair_threshold"
+CONF_UPDATE_REPAIR_ACTIONS = "update_repair_actions"
 DEFAULT_UPDATE_REPAIR_THRESHOLD = 100
 CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 60
