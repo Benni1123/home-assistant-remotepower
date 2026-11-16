@@ -1,0 +1,82 @@
+{
+  "title": "RemotePower",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit RemotePower verbinden",
+        "description": "Einen eigenen API-Schlüssel verwenden. Ohne Zertifikatsprüfung werden selbst signierte, aber auch fremde Zertifikate akzeptiert. Nur in vertrauenswürdigen Netzen abschalten.",
+        "data": {
+          "url": "Server-URL",
+          "api_key": "API-Schlüssel",
+          "verify_ssl": "TLS-Zertifikat überprüfen"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "Eine HTTPS-URL ohne Zugangsdaten, Abfrage oder Pfad eingeben.",
+      "invalid_auth": "Ungültiger API-Schlüssel oder fehlende Berechtigung.",
+      "cannot_connect": "Verbindung fehlgeschlagen. URL und Zertifikatsprüfung kontrollieren.",
+      "invalid_response": "Der Server liefert keinen gültigen RemotePower-Bericht."
+    },
+    "abort": {"already_configured": "Dieser Server ist bereits eingerichtet."}
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "RemotePower-Optionen",
+        "description": "APT-Suche führt nur einen festgelegten apt-get update-Befehl aus, ohne Pakete zu installieren. Steueraktionen erlauben Paketupgrades einschließlich RemotePowers Bereinigung, Neustart, Herunterfahren und Änderungen des Upgrade-Modus. Beides ist anfangs AUS. RemotePower-Freigaben bleiben wirksam.",
+        "data": {
+          "verify_ssl": "TLS-Zertifikat überprüfen",
+          "enable_apt_refresh": "Aktualisierung der APT-Paketlisten erlauben",
+          "enable_control": "Upgrades, Stromaktionen und Upgrade-Modus erlauben",
+          "scan_interval": "Gespeicherte Berichte abfragen alle (Sekunden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "upgradable": {"name": "Verfügbare Updates"},
+      "security_updates": {"name": "Sicherheitsupdates"},
+      "os": {"name": "Betriebssystem"},
+      "last_seen": {"name": "Letzter Kontakt"},
+      "pkg_manager": {"name": "Paketmanager"},
+      "version": {"name": "Agent-Version"},
+      "hosts_online": {"name": "Hosts online"},
+      "total_updates": {"name": "Verfügbare Updates gesamt"},
+      "hosts_without_data": {"name": "Hosts ohne aktuelle Update-Daten"}
+    },
+    "binary_sensor": {
+      "online": {"name": "Online"},
+      "reboot_required": {"name": "Neustart erforderlich"}
+    },
+    "button": {
+      "scan_packages": {"name": "Paketdaten neu erfassen"},
+      "search_updates": {"name": "Nach Updates suchen (APT)"},
+      "scan_acme": {"name": "ACME-Zertifikate neu erfassen"},
+      "upgrade": {"name": "Pakete aktualisieren"},
+      "reboot": {"name": "Neustarten"},
+      "shutdown": {"name": "Herunterfahren"}
+    },
+    "select": {
+      "upgrade_mode": {
+        "name": "APT-Upgrade-Modus",
+        "state": {"standard": "Standard", "extended": "Erweitert"}
+      }
+    }
+  },
+  "services": {
+    "bulk_action": {
+      "name": "Sammelaktion ausführen",
+      "description": "Genau einen Zielfilter wählen. Aktionen werden vorgemerkt, nicht als abgeschlossen bestätigt. Steueraktionen benötigen zusätzlich confirm und die Freischaltung in den Optionen. Antwort pro Host beachten.",
+      "fields": {
+        "entry_id": {"name": "Integrationseintrag", "description": "Konfigurationseintrags-ID der RemotePower-Integration."},
+        "action": {"name": "Aktion"},
+        "host_ids": {"name": "RemotePower-Host-IDs"},
+        "group": {"name": "RemotePower-Gruppe"},
+        "all_monitored": {"name": "Alle überwachten Hosts"},
+        "confirm": {"name": "Steueraktion bestätigen"}
+      }
+    }
+  }
+}

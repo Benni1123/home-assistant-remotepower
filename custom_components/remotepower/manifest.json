@@ -1,0 +1,11 @@
+{
+  "domain": "remotepower",
+  "name": "RemotePower",
+  "version": "0.1.0",
+  "codeowners": ["@Benni1123"],
+  "config_flow": true,
+  "documentation": "https://github.com/Benni1123/home-assistant-remotepower",
+  "issue_tracker": "https://github.com/Benni1123/home-assistant-remotepower/issues",
+  "iot_class": "local_polling",
+  "requirements": []
+}

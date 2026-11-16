@@ -1,0 +1,27 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install aiohttp voluptuous ruff
+      - run: python -m compileall -q custom_components tests
+      - run: ruff check custom_components tests
+      - run: python -m unittest discover -s tests -v
+  home-assistant-import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install homeassistant==2025.3.4
+      - name: Import integration against real Home Assistant
+        run: >-
+          python -c "from custom_components.remotepower import
+          config_flow, coordinator, sensor, binary_sensor, button, select, services;
+          assert config_flow.RemotePowerConfigFlow.VERSION == 1"
