@@ -25,6 +25,11 @@ def make_coordinator():
         bulk_control=AsyncMock(return_value={"one": {"status": "queued"}}),
         patch_report=AsyncMock(return_value={"devices": []}),
         host_versions=AsyncMock(return_value={}),
+        host_details=AsyncMock(return_value={}),
+        maintenance=AsyncMock(return_value={"enabled": False, "windows": []}),
+        outputs=AsyncMock(return_value=[]),
+        command_queue=AsyncMock(return_value={}),
+        safe_upgrade=AsyncMock(return_value={"status": "queued"}),
     )
     result = coordinator_module.RemotePowerCoordinator(SimpleNamespace(), entry, client)
     result.data = {"one": {

@@ -45,7 +45,7 @@ def async_register_services(hass):
             raise HomeAssistantError("Selection is empty or contains unknown hosts")
         if action in ("upgrade", "reboot", "shutdown"):
             return {"results": await coordinator.async_bulk_control(ids, action)}
-        results = {}
+        ids, results = await coordinator.async_filter_bulk(ids)
         for device_id in ids:
             try:
                 results[device_id] = await coordinator.async_action(device_id, action)

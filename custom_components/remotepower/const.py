@@ -5,11 +5,23 @@ PLATFORMS = ["sensor", "binary_sensor", "button", "select"]
 CONF_VERIFY_SSL = "verify_ssl"
 CONF_ENABLE_APT = "enable_apt_refresh"
 CONF_ENABLE_CONTROL = "enable_control"
+CONF_ALLOW_PROXMOX = "allow_proxmox_control"
+CONF_REPAIRS = "enable_repairs"
 CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 60
 # Fixed command, never composed from user/host input. No package installation.
 # Error-Mode=any prevents partial repository failures from looking successful.
 APT_REFRESH_COMMAND = "apt-get -o APT::Update::Error-Mode=any update"
-CONTROL_ACTIONS = {"upgrade", "reboot", "shutdown", "mode_standard", "mode_extended"}
+CONTROL_ACTIONS = {"upgrade", "upgrade_no_cleanup", "reboot", "shutdown", "mode_standard", "mode_extended"}
 ACTIONS = ("scan_packages", "search_updates", "scan_acme", "upgrade",
-           "reboot", "shutdown", "mode_standard", "mode_extended")
+           "upgrade_no_cleanup", "reboot", "shutdown", "mode_standard", "mode_extended")
+# Separate opt-in path: no autoremove, cache cleanup or automatic reboot.
+APT_SAFE_UPGRADE = (
+    "set -e; if command -v update-initramfs >/dev/null; then "
+    "test -n \"$(ls -A /lib/modules 2>/dev/null)\" || exit 3; fi; "
+    "export DEBIAN_FRONTEND=noninteractive; "
+    "apt-get -o APT::Update::Error-Mode=any update; "
+    "apt-get -o DPkg::Lock::Timeout=300 "
+    "-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "
+    "-y upgrade --with-new-pkgs"
+)

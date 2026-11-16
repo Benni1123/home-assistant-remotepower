@@ -21,6 +21,18 @@ gegen eine echte Instanz getestet. Keine offizielle RemotePower-Integration.
 - Zusätzliche, anfangs deaktivierte Buttons: **Pakete aktualisieren**,
   **Neustarten**, **Herunterfahren**, **ACME-Zertifikate neu erfassen**.
 - Anfangs deaktivierte Auswahl **APT-Upgrade-Modus**: Standard / Erweitert.
+- Aktionsstatus und Update-Verlauf mit bestätigtem Exitcode, letztem Paketbericht
+  und letztem Systemstart. Updatepakete und zurückgehaltene Pakete als Attribute.
+- Neustartbedarf aus **System-Flag und separatem Kernel-/Hardware-Flag**.
+  Der Kernelalarm wird dadurch auch dann angezeigt, wenn die RemotePower-
+  Patch-Übersicht keinen Reboot-Badge darstellt.
+- HA-Reparaturmeldung bei Neustartbedarf und fehlgeschlagenen Aktionen;
+  Bestätigungsdialog **Neustart durchführen**, keine automatische Ausführung.
+- Schutz erkannter Proxmox-Hosts und zusätzlicher APT-Upgrade-Button ohne
+  `autoremove`, Cache-Bereinigung oder automatischen Neustart.
+- Sammelaktionen überspringen Hosts in aktiven Wartungsfenstern.
+- Verbindung bearbeiten über **Neu konfigurieren**; Diagnoseexport ohne
+  Zugangsdaten, Adressen, Hostnamen und rohe Befehlsausgaben.
 - Sammelaktionen per `remotepower.bulk_action`, explizit für Host-IDs,
   eine Gruppe oder alle überwachten Hosts.
 - Deutsche und englische Oberfläche.
@@ -72,9 +84,102 @@ HA speichert den Schlüssel in seinem Konfigurationseintrag (kein externer Treso
 - Schlüssel nach Möglichkeit auf benötigte Hosts (Gruppe/Tag/Standort),
   HA-Quell-IP und eine angemessene Laufzeit begrenzen.
 - Sensoren werden automatisch alle 60 Sekunden gelesen (30–3600 einstellbar).
-  Das löst **keine Scans, Upgrades oder Befehle** aus.
+  Ohne zuvor angeforderten Auftrag löst dies keine Hostaktionen aus. Ein
+  bestätigtes, über HA angefordertes Upgrade erhält den beschriebenen
+  einmaligen Follow-up-Paketscan.
 
 ## Sicherheit und Bedeutung der Aktionen
+
+### Aktionsstatus und Verlauf (ab 0.2.0)
+
+Eine positive Queue-Antwort wird als **Wartet auf Agent**, nicht als erfolgreicher
+Abschluss angezeigt. Statuswechsel verwenden neue Befehlsresultate und deren
+Exitcode. Die Verringerung der Update-Anzahl / RemotePowers „verified“-Badge
+ist dafür **kein Erfolgsnachweis**. Ein aus der Queue verschwundener Auftrag
+heißt nur **Übergeben; Ergebnis unbestätigt**, nicht nachweislich „läuft“.
+Für eine belastbare Startmeldung stellt die geprüfte API keinen Startzeitpunkt bereit.
+
+Für native Upgrades stellt RemotePower keinen eindeutigen Command-ID-Bezug
+zwischen Auftrag und Ergebnis bereit. Die Integration vergleicht Befehlstyp,
+neue Resultate gegenüber einem vorab gelesenen Verlauf und Serverzeitstempel.
+Zeitgleiche identische Fremdaktionen können nicht zweifelsfrei unterschieden
+werden; mehrere passende Resultate ergeben **Ergebnis unbekannt**.
+Der separate Upgrade-ohne-Bereinigung-Weg verwendet dagegen eine eindeutige
+Kennung und den Fingerabdruck des vollständigen Befehls.
+
+Nach bestätigtem Upgrade-Erfolg wird **einmalig** ein Paketscan angefordert,
+auch wenn noch ein zurückgehaltenes Paket übrig ist. Die Scanabsicht wird vor
+dem API-Aufruf gespeichert, damit ein HA-Neustart keinen doppelten Request
+verursacht. Scheitert der Scan oder bleibt sein Ergebnis unklar, kann er
+manuell angestoßen werden. Es gibt keine automatische Wiederholung von Upgrades.
+Zeitpunkt der letzten Paketmeldung (`pkg_scan_ts`) ist der Eingang beim Server,
+nicht zwingend der Zeitpunkt eines frischen `apt update`.
+
+Aktuelle HA-Aktionen und die letzten zehn vorherigen Aktionen werden lokal
+gespeichert, ohne rohe Befehle oder Ausgaben. Nach einem HA-Neustart wird nur
+weiter beobachtet, nie erneut ausgeführt. Bleibt nach zwei Stunden ein
+Ergebnis aus, lautet der Zustand **Ergebnis unbekannt**, nicht „fehlgeschlagen“.
+
+Ein Neustart ist erst bestätigt, wenn der Host wieder online ist und einen
+neuen Systemstartzeitpunkt meldet. Ohne bekannten vorherigen Systemstart kann
+kein Erfolg behauptet werden. Ein ausgeschalteter oder unerreichbarer Host
+allein beweist keinen erfolgreichen Neustart oder Shutdown.
+
+### Proxmox-Schutz
+
+Die Integration erkennt Proxmox anhand gemeldeter Proxmox-Paketnamen, einer
+Proxmox-Betriebssystembezeichnung, der Gruppe `ProxmoxHost` / `proxmox-host`
+oder des Tags **`proxmox-host`**. Die Erkennung wird gespeichert, damit sie
+nach dem Installieren der letzten ausstehenden Proxmox-Pakete nicht verschwindet.
+Eine Kernelbezeichnung mit `-pve` allein reicht absichtlich nicht, da LXCs
+denselben Kernel teilen. **Nicht erkannte PVE-Hosts ausdrücklich mit
+`proxmox-host` markieren**, bevor Steueraktionen verwendet werden.
+
+Für erkannte PVE-Hosts ist das native Upgrade mit automatischer Bereinigung
+gesperrt. **Pakete ohne Bereinigung aktualisieren (APT)** nutzt ein festes
+`apt-get update` plus `apt-get upgrade --with-new-pkgs`, übernimmt bestehende
+Konfigurationsdateien und führt kein `autoremove`, `clean` oder `reboot` aus.
+Falls `update-initramfs` vorhanden ist, muss ein Kernelmodulbaum sichtbar sein;
+andernfalls bricht der Befehl vorsorglich ab.
+Dieser Weg nutzt die normale RemotePower-Befehlsausführung und deren Freigaben.
+Er kann trotzdem Dienste neu starten und Kernelpakete installieren: kein
+Ersatz für Backups, Wartungsfenster und Prüfung der Proxmox-Versionshinweise.
+
+Host-Neustarts/Shutdowns und der bereinigungsfreie Upgrade-Weg erfordern für
+erkannte PVE-Hosts zusätzlich **Proxmox-Host-Stromaktionen und Upgrades ohne
+Bereinigung erlauben**. Auf einer HA-Entitätskarte gibt es keine verlässliche
+interaktive Sicherheitsabfrage bei jedem Knopfdruck; deshalb diese Sperren.
+
+### Wartung und Reparaturen
+
+Vor einer Sammelaktion werden globale Wartung und Wartungsfenster frisch
+gelesen. Aktive Geräte-, Gruppen-, Standort-, Tag- und globale Fenster werden
+berücksichtigt. Smart-Gruppen kann die Integration nicht lokal auswerten:
+bei einem aktiven Smart-Fenster wird konservativ die gesamte Auswahl
+ausgeschlossen. Ein unbekanntes Wartungsformat oder eine fehlgeschlagene
+Abfrage blockiert die Sammelaktion, statt den Schutz zu überspringen.
+Das ist bewusst strenger als RemotePowers ausführungsfreigebende Change-Windows:
+**aktive Wartungsfenster schließen Hosts aus HA-Sammelaktionen aus**.
+
+Reparaturen lassen sich in den Optionen abschalten. Der Neustart-Dialog
+erfordert eine ausdrückliche Bestätigung und nutzt dieselben Steuer-, Proxmox-
+und Freigabesicherungen wie der normale Reboot-Button. Nach „vorgemerkt“
+bleibt die Reparatur offen, bis neue Hostdaten keinen System- und keinen
+Kernel-Neustartbedarf mehr melden. Bei Offline-Hosts bleibt eine bestehende
+Neustartmeldung erhalten. Ein Kernelalarm wird nicht aus unterschiedlichen
+Versionsstrings erraten, sondern aus RemotePowers strukturiertem Kernel-Flag.
+
+### Verbindung und Diagnose
+
+Im Drei-Punkte-Menü der Integration **Neu konfigurieren** wählen. URL, Schlüssel
+und TLS-Prüfung werden lesend validiert; bei Fehlern bleibt die alte Verbindung
+unverändert. Leerer Schlüssel behält den bisherigen, ohne ihn im Formular
+anzuzeigen. Eintrags-ID, Geräte und Entitäts-IDs bleiben erhalten. Für dieselbe
+RemotePower-Instanz nach Adress-/Zugangsdatenänderung verwenden.
+
+Diagnosen arbeiten mit einer Positivliste: keine URL, API-Schlüssel,
+Hostnamen, Paketnamen, IPs, Tags, Gruppen, rohen Befehle oder Ausgaben.
+Die anonymisierte Zuordnung enthält nur Hostnummern, Zustände und Zeitstempel.
 
 - Upgrade/Stromaktionen/Modusänderungen erfordern die Option **Steueraktionen
   erlauben**. In Automationen können Stromaktionen ohne interaktive Nachfrage
@@ -116,11 +221,11 @@ data:
 
 Mögliche Aktionen:
 `scan_packages`, `search_updates`, `scan_acme`, `upgrade`, `reboot`, `shutdown`,
-`mode_standard`, `mode_extended`.
+`mode_standard`, `mode_extended`, `upgrade_no_cleanup`.
 
-Für die letzten fünf zusätzlich `confirm: true` setzen und Steueraktionen in
+Für Upgrades, Stromaktionen und Modusänderungen zusätzlich `confirm: true` setzen und Steueraktionen in
 den Integrationsoptionen erlauben. Die Antwort liefert je Host `scan_queued`,
-`queued`, `applied`, `approval_required` oder `failed`.
+`queued`, `applied`, `approval_required`, `skipped_maintenance` oder `failed`.
 In Skripten kann sie über `response_variable` gespeichert werden.
 Es gibt keine Standardauswahl aller Hosts. Offline-Hosts werden abgelehnt.
 Upgrade- und Strom-Sammelaktionen gehen als native Batch-Anfrage an RemotePower,

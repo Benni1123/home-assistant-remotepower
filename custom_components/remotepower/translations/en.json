@@ -10,6 +10,16 @@
           "api_key": "API key",
           "verify_ssl": "Verify TLS certificate"
         }
+      },
+      "reconfigure": {
+        "title": "Change RemotePower connection",
+        "description": "Leave API key empty to keep the existing key. No scans or commands are executed. Use this for the same server after an address or credential change.",
+        "data": {"url": "Server URL", "api_key": "New API key (optional)", "verify_ssl": "Verify TLS certificate"}
+      },
+      "reauth_confirm": {
+        "title": "Renew RemotePower credentials",
+        "description": "Enter a valid API key. Existing host devices are retained.",
+        "data": {"url": "Server URL", "api_key": "New API key", "verify_ssl": "Verify TLS certificate"}
       }
     },
     "error": {
@@ -18,7 +28,11 @@
       "cannot_connect": "Connection failed. Check URL and TLS certificate verification.",
       "invalid_response": "The server did not return a valid RemotePower report."
     },
-    "abort": {"already_configured": "This server is already configured."}
+    "abort": {
+      "already_configured": "This server is already configured.",
+      "reconfigure_successful": "Connection updated.",
+      "reauth_successful": "Authentication updated."
+    }
   },
   "options": {
     "step": {
@@ -29,6 +43,8 @@
           "verify_ssl": "Verify TLS certificate",
           "enable_apt_refresh": "Allow APT package-list refresh",
           "enable_control": "Allow upgrades, power actions and upgrade-mode changes",
+          "allow_proxmox_control": "Allow Proxmox host power actions and upgrades without cleanup (affects guests)",
+          "enable_repairs": "Show repair issues for reboot requirements and failed actions",
           "scan_interval": "Read cached reports every (seconds)"
         }
       }
@@ -42,19 +58,36 @@
       "last_seen": {"name": "Last contact"},
       "pkg_manager": {"name": "Package manager"},
       "version": {"name": "Agent version"},
+      "last_scan": {"name": "Last package scan"},
+      "last_boot": {"name": "Last boot"},
+      "last_update_status": {"name": "Last update result", "state": {"success": "Successful", "failed": "Failed"}},
+      "operation_status": {
+        "name": "Action status",
+        "state": {
+          "idle": "No action", "submitting": "Submitting",
+          "queued": "Waiting for agent", "approval_required": "Approval required",
+          "awaiting_result": "Dispatched; result unconfirmed",
+          "waiting_for_return": "Waiting for host to return",
+          "success": "Successful", "failed": "Failed", "unknown": "Result unknown",
+          "applied": "Applied"
+        }
+      },
       "hosts_online": {"name": "Hosts online"},
       "total_updates": {"name": "Total pending updates"},
       "hosts_without_data": {"name": "Hosts without current update data"}
     },
     "binary_sensor": {
       "online": {"name": "Online"},
-      "reboot_required": {"name": "Reboot required"}
+      "reboot_required": {"name": "Reboot required"},
+      "maintenance": {"name": "In maintenance"},
+      "is_proxmox": {"name": "Protected Proxmox host"}
     },
     "button": {
       "scan_packages": {"name": "Rescan package data"},
       "search_updates": {"name": "Search for updates (APT)"},
       "scan_acme": {"name": "Rescan ACME certificates"},
       "upgrade": {"name": "Upgrade packages"},
+      "upgrade_no_cleanup": {"name": "Upgrade packages without cleanup (APT)"},
       "reboot": {"name": "Reboot"},
       "shutdown": {"name": "Shut down"}
     },
@@ -63,6 +96,34 @@
         "name": "APT upgrade mode",
         "state": {"standard": "Standard", "extended": "Extended"}
       }
+    }
+  },
+  "issues": {
+    "reboot_required": {
+      "title": "Reboot required: {host}",
+      "description": "RemotePower reports a system or kernel reboot requirement for **{host}**. A Proxmox host reboot interrupts its guests. Choose Repair to explicitly confirm a reboot. Control permissions and RemotePower approvals remain enforced. This issue clears only after a fresh report clears the requirement.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Perform reboot",
+            "description": "Reboot **{host}**? Services will be interrupted. On a Proxmox host this affects all guests. Global controls and Proxmox controls must be enabled in the integration options. RemotePower may require a separate approval.",
+            "data": {"confirm_reboot": "Yes, perform reboot"}
+          }
+        },
+        "error": {
+          "confirmation_required": "Explicitly confirm the reboot.",
+          "reboot_blocked": "Reboot blocked or not confirmed. Check host status, permissions, pending actions, maintenance and integration options."
+        },
+        "abort": {
+          "host_unavailable": "Host or integration unavailable.",
+          "approval_required": "Reboot awaits approval in RemotePower. The repair remains open.",
+          "reboot_queued": "Reboot queued, not yet confirmed. The repair remains open until a fresh host report clears the requirement."
+        }
+      }
+    },
+    "action_failed": {
+      "title": "RemotePower action failed: {host}",
+      "description": "The last tracked action for **{host}** failed. Check the action-status sensor and RemotePower command history before retrying. No automatic upgrade or reboot retry will be performed."
     }
   },
   "services": {

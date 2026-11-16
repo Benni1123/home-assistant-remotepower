@@ -2,6 +2,7 @@
 
 import asyncio
 import unittest
+import hashlib
 from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
@@ -141,6 +142,61 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
     async def test_roster(self):
         self.session.request.return_value = response([{"id": "one", "version": "8.0.0"}])
         self.assertEqual(await self.client.host_versions(), {"one": "8.0.0"})
+
+    async def test_full_roster_projection_omits_unneeded_data(self):
+        self.session.request.return_value = response([{
+            "id": "one", "version": "8.0.0", "hw_health": {"kernel_reboot": True},
+            "ssh_password": "SECRET", "sysinfo": {"accounts": "SECRET", "pkg_scan_ts": 100},
+        }])
+        result = await self.client.host_details()
+        self.assertTrue(result["one"]["kernel_reboot_required"])
+        self.assertNotIn("SECRET", repr(result))
+
+    async def test_maintenance_requires_valid_complete_response(self):
+        self.session.request.side_effect = [
+            response({"enabled": False}), response({"windows": [{"active": "yes"}]}),
+        ]
+        with self.assertRaises(api.RemotePowerError):
+            await self.client.maintenance()
+
+    async def test_safe_upgrade_is_short_tagged_and_has_no_cleanup(self):
+        self.session.request.return_value = response({"ok": True})
+        result = await self.client.safe_upgrade("one", "a" * 32)
+        body = self.session.request.call_args.kwargs["json"]
+        self.assertTrue(self.session.request.call_args.args[1].endswith("/api/exec"))
+        self.assertEqual(body["timeout"], 1800)
+        full = f"exec:to=1800:{body['cmd']}"
+        self.assertLessEqual(len(full), 512)
+        self.assertEqual(result["fingerprint"], hashlib.sha256(full.encode()).hexdigest())
+        self.assertIn("--with-new-pkgs", body["cmd"])
+        self.assertIn("/lib/modules", body["cmd"])
+        for forbidden in ("autoremove", " clean", "reboot", "dist-upgrade"):
+            self.assertNotIn(forbidden, body["cmd"])
+
+    async def test_safe_upgrade_retains_approval(self):
+        self.session.request.return_value = response({"approval_required": True}, 202)
+        result = await self.client.safe_upgrade("one", "b" * 32)
+        self.assertEqual(result["status"], "approval_required")
+        self.assertTrue(result["fingerprint"])
+
+    async def test_safe_upgrade_rejects_shell_injection_token(self):
+        with self.assertRaises(api.RemotePowerError):
+            await self.client.safe_upgrade("one", "; rm -rf /")
+        self.session.request.assert_not_called()
+
+    async def test_kernel_projection_omits_hardware_inventory(self):
+        self.session.request.return_value = response({
+            "kernel": {"running": "old", "latest_installed": "new"},
+            "accounts": [{"password": "SECRET"}],
+        })
+        result = await self.client.kernel_state("one")
+        self.assertEqual(result, {"running_kernel": "old", "installed_kernel": "new"})
+
+    async def test_output_projection_never_returns_raw_output(self):
+        self.session.request.return_value = response({"outputs": [{
+            "cmd": "exec:echo SECRET", "output": "SECRET", "ts": 100, "rc": 0,
+        }]})
+        self.assertNotIn("SECRET", repr(await self.client.outputs("one")))
 
     async def test_native_batch_preserves_approvals_and_failures(self):
         self.session.request.return_value = response({"ok": True, "results": {

@@ -16,7 +16,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
             for apt in (False, True)
         ] + [
             RemotePowerActionButton(coordinator, device_id, action)
-            for action in ("scan_acme", "upgrade", "reboot", "shutdown")
+            for action in ("scan_acme", "upgrade", "upgrade_no_cleanup", "reboot", "shutdown")
         ],
     )
 
@@ -52,10 +52,18 @@ class RemotePowerActionButton(RemotePowerEntity, ButtonEntity):
         self._attr_icon = {
             "reboot": "mdi:restart", "shutdown": "mdi:power",
             "upgrade": "mdi:package-up", "scan_acme": "mdi:certificate",
+            "upgrade_no_cleanup": "mdi:package-up",
         }[action]
 
     @property
     def available(self):
+        if self.row.get("is_proxmox"):
+            if self.action == "upgrade":
+                return False
+            if self.action in ("reboot", "shutdown", "upgrade_no_cleanup") and not self.coordinator.proxmox_enabled:
+                return False
+        if self.action == "upgrade_no_cleanup" and self.row.get("pkg_manager") != "apt":
+            return False
         return (
             super().available and bool(self.row.get("online"))
             and (self.action == "scan_acme" or self.coordinator.control_enabled)

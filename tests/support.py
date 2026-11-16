@@ -51,12 +51,81 @@ class DataUpdateCoordinator:
         pass
 
 
+class Store:
+    def __init__(self, *args):
+        self.data = None
+
+    async def async_load(self):
+        return self.data
+
+    async def async_save(self, data):
+        import copy
+        self.data = copy.deepcopy(data)
+
+    async def async_remove(self):
+        self.data = None
+
+
+class Flow:
+    def __init_subclass__(cls, **kwargs):
+        pass
+
+    def async_show_form(self, **kwargs):
+        return {"type": "form", **kwargs}
+
+    def async_abort(self, **kwargs):
+        return {"type": "abort", **kwargs}
+
+    def async_create_entry(self, **kwargs):
+        return {"type": "create_entry", **kwargs}
+
+    def async_update_reload_and_abort(self, entry, **kwargs):
+        self.updates = kwargs
+        return {"type": "abort", "reason": "updated"}
+
+
+class TextSelector:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, value):
+        return str(value)
+
+
+def issue_registry(hass):
+    if not hasattr(hass, "issue_registry"):
+        hass.issue_registry = SimpleNamespace(issues={})
+    return hass.issue_registry
+
+
+def create_issue(hass, domain, issue_id, **kwargs):
+    issue_registry(hass).issues[(domain, issue_id)] = kwargs
+
+
+def delete_issue(hass, domain, issue_id):
+    issue_registry(hass).issues.pop((domain, issue_id), None)
+
+
 module("homeassistant")
 module("homeassistant.components")
 module("homeassistant.helpers")
 module("homeassistant.exceptions", HomeAssistantError=HAError)
-module("homeassistant.config_entries", ConfigEntryAuthFailed=HAError)
-module("homeassistant.core", SupportsResponse=SimpleNamespace(OPTIONAL="optional"))
+module("homeassistant.config_entries", ConfigEntryAuthFailed=HAError, ConfigFlow=Flow, OptionsFlow=Flow)
+module("homeassistant.const", CONF_API_KEY="api_key", CONF_URL="url")
+module("homeassistant.core", SupportsResponse=SimpleNamespace(OPTIONAL="optional"), callback=lambda f: f)
+module("homeassistant.components.repairs", RepairsFlow=Flow)
+module("homeassistant.helpers.storage", Store=Store)
+module(
+    "homeassistant.helpers.issue_registry", async_get=issue_registry,
+    async_create_issue=create_issue, async_delete_issue=delete_issue,
+    IssueSeverity=SimpleNamespace(WARNING="warning"),
+)
+module(
+    "homeassistant.helpers.selector", TextSelector=TextSelector,
+    TextSelectorConfig=lambda **kwargs: kwargs,
+    TextSelectorType=SimpleNamespace(PASSWORD="password"),
+)
+module("homeassistant.helpers.aiohttp_client", async_get_clientsession=lambda hass: None)
 module(
     "homeassistant.helpers.update_coordinator",
     CoordinatorEntity=CoordinatorEntity,
@@ -67,7 +136,7 @@ module("homeassistant.helpers.device_registry", DeviceInfo=lambda **kw: kw)
 module(
     "homeassistant.components.sensor",
     SensorEntity=Entity,
-    SensorDeviceClass=SimpleNamespace(TIMESTAMP="timestamp"),
+    SensorDeviceClass=SimpleNamespace(TIMESTAMP="timestamp", ENUM="enum"),
     SensorStateClass=SimpleNamespace(MEASUREMENT="measurement"),
 )
 module(

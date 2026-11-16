@@ -23,5 +23,8 @@ jobs:
       - name: Import integration against real Home Assistant
         run: >-
           python -c "from custom_components.remotepower import
-          config_flow, coordinator, sensor, binary_sensor, button, select, services;
+          config_flow, coordinator, sensor, binary_sensor, button, select, services,
+          issues, repairs, diagnostics;
           assert config_flow.RemotePowerConfigFlow.VERSION == 1"
+      - name: Smoke-test real HA repairs and entity APIs without host actions
+        run: python -m scripts.ha_smoke
